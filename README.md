@@ -1,4 +1,4 @@
-# DocVault — Sistema de Gestão de Contratos e Termos
+# DRAFT — Sistema de Gestão de Contratos e Termos
 
 Projeto da Avaliação N3 de Segurança da Informação — Católica SC  
 Código do projeto: **P06-B** — Gestão de documentos: Contratos ou termos fictícios
