@@ -35,8 +35,8 @@ npm run dev
 
 ## Integrantes
 
-- [Nome 1]
-- [Nome 2]
-- [Nome 3]
-- [Nome 4]
-- [Nome 5]
+- [Lucas Rogério Mendonça]
+- [Henrique cordeiro de oliveira]
+- [Nicholas Scoz dos santos]
+- [Victor kunz]
+- [Vinicius Steuernagel]
