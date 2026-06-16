@@ -1,0 +1,82 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String            
+  email            String            @unique
+  passwordHash     String            
+  role             String            @default("COLABORADOR")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  documentsOwned   Document[]        @relation("OwnerRelation")
+  documentsAssigned Document[]       @relation("AssignedToRelation")
+  documentVersions DocumentVersion[]
+  auditLogs        AuditLog[]
+  comments         Comment[]
+}
+
+model Document {
+  id               String            @id @default(uuid())
+  title            String            
+  description      String            
+  status           String            @default("RASCUNHO")
+  currentVersion   Int               @default(1)
+  
+  ownerId          String            
+  assignedToId     String?           
+  
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  owner            User              @relation("OwnerRelation", fields: [ownerId], references: [id])
+  assignedTo       User?             @relation("AssignedToRelation", fields: [assignedToId], references: [id])
+  versions         DocumentVersion[]
+  comments         Comment[]
+}
+
+model DocumentVersion {
+  id               String            @id @default(uuid())
+  documentId       String            
+  versionNumber    Int               
+  content          String            
+  createdById      String            
+  createdAt        DateTime          @default(now())
+
+  document         Document          @relation(fields: [documentId], references: [id])
+  createdBy        User              @relation(fields: [createdById], references: [id])
+}
+
+model AuditLog {
+  id               String            @id @default(uuid())
+  action           String            
+  userId           String            
+  targetId         String?           
+  targetType       String?           
+  details          String?           
+  ipAddress        String            
+  userAgent        String            
+  createdAt        DateTime          @default(now())
+
+  user             User              @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id               String            @id @default(uuid())
+  documentId       String            
+  authorId         String            
+  content          String            
+  createdAt        DateTime          @default(now())
+
+  document         Document          @relation(fields: [documentId], references: [id])
+  author           User              @relation(fields: [authorId], references: [id])
+}
