@@ -1,81 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ Draft - API Segura de Gestão de Documentos (Back-end)
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js_14-API_Routes-black?style=for-the-badge&logo=next.js)
+![Prisma](https://img.shields.io/badge/Prisma_ORM-Database-2D3748?style=for-the-badge&logo=prisma)
+![Zod](https://img.shields.io/badge/Zod-Validation-3068b7?style=for-the-badge&logo=zod)
+![Security](https://img.shields.io/badge/AppSec-Security_by_Design-success?style=for-the-badge&logo=springsecurity)
 
-First, run the development server:
+A API RESTful do sistema **Draft** (Projeto P06-B) é a espinha dorsal de validação e persistência para a gestão do ciclo de vida de contratos fictícios [5, 6]. Operando sob uma arquitetura de mitigação *cross-origin*, esta aplicação foi desenvolvida com foco central em **Application Security (AppSec)**, garantindo controle rigoroso de acessos e trilhas de auditoria imutáveis [1, 7].
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 💻 Stack Tecnológica
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A infraestrutura foi construída com tecnologias robustas voltadas para a segurança da informação [8]:
+*   **Framework:** Next.js 14 (Exclusivamente API Routes) [3].
+*   **Persistência (ORM):** Prisma ORM utilizando SQLite em ambiente de desenvolvimento [3].
+*   **Validação de Dados:** Zod (Server-side validation de payloads) [9].
+*   **Criptografia:** `bcryptjs` para tratamento seguro de credenciais [9].
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔒 Features de Segurança (AppSec)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+A API não confia na entrada do cliente e possui as seguintes defesas ativas:
+*   **Validação Estrita via Zod:** Rejeição imediata (HTTP 400) de qualquer payload malformado ou malicioso antes da interação com o banco de dados [9, 10].
+*   **Hash de Senhas:** Aplicação de custo computacional com `bcryptjs` e *salt* dinâmico para garantir que senhas nunca sejam armazenadas em texto puro [9, 11].
+*   **Autorização Cross-Origin e JWT Bearer:** Middleware que intercepta e valida criptograficamente os tokens JWT enviados no cabeçalho HTTP, recusando origens e identidades não autorizadas [10, 12].
+*   **Trilha Forense (AuditLog):** Todas as mutações no sistema (criação, aprovação, rejeição, deleção) são persistidas nativamente junto com o IP (`x-forwarded-for`) e o `userAgent` do cliente, compondo provas forenses de Não-Repúdio [13-15].
 
-## Learn More
+## ⚙️ Variáveis de Ambiente
 
-To learn more about Next.js, take a look at the following resources:
+O projeto exige configurações de segredos estritas (não versionadas no controle de código) [15, 16]. Crie um arquivo `.env` na raiz da pasta com o seguinte formato:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+# URL de conexão do Prisma ORM (Exemplo usando SQLite local)
+DATABASE_URL="file:./dev.db"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Chave criptográfica para validação da assinatura do JWT
+AUTH_SECRET="sua-chave-super-segura-de-no-minimo-32-caracteres"
+🚀 Passo a Passo de Execução
+Siga as instruções abaixo para executar a API localmente:
+Instalar Dependências: Instale os pacotes e bibliotecas descritos no ecossistema:
+Configurar o Banco de Dados: Sincronize a modelagem relacional forense criando as tabelas necessárias:
+(Alternativamente, utilize npx prisma db push para empurrar o schema diretamente).
+Iniciar o Servidor: Inicie a API garantindo que ela ocupe obrigatoriamente a porta de serviço 3001
+:
+A API estará operante em http://localhost:3001 aguardando conexões autenticadas.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-# DRAFT — Sistema de Gestão de Contratos e Termos
-
-Projeto da Avaliação N3 de Segurança da Informação — Católica SC  
-Código do projeto: **P06-B** — Gestão de documentos: Contratos ou termos fictícios
-
-## Descrição
-
-Sistema web para gestão de contratos e termos fictícios com controle de versões,
-fluxo de aprovação e logs de auditoria. Desenvolvido com Next.js, Prisma e NextAuth.js.
-
-## Perfis de usuário
-
-- **Colaborador** — cria e acompanha seus próprios documentos
-- **Analista** — revisa, aprova ou rejeita documentos submetidos
-- **Administrador** — gerencia usuários, acessa todos os documentos e logs
-
-## Stack
-
-- Next.js 14 (App Router + API Routes)
-- Prisma ORM + PostgreSQL (SQLite local)
-- NextAuth.js v5
-- bcryptjs
-- Zod
-- Tailwind CSS
-
-## Instalação
-
-> Instruções completas serão adicionadas nas próximas semanas.
-
-```bash
-cp .env.example .env
-npm install
-npm run dev
-```
-
-## Integrantes
-
-- [Lucas Rogério Mendonça]
-- [Henrique cordeiro de oliveira]
-- [Nicholas Scoz dos santos]
-- [Victor kunz]
-- [Vinicius Steuernagel]
-
- 
+***
