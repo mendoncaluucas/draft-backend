@@ -46,6 +46,17 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     // AppSec: IDOR Mitigation - Colaborador só acede aos seus [cite: 93, 252]
     if (user.role === "COLABORADOR" && document.ownerId !== user.id) {
+      // AppSec: Registra a tentativa de acesso negado na trilha forense
+      await prisma.auditLog.create({
+        data: {
+          action: "ACCESS_DENIED",
+          userId: user.id as string,
+          targetId: params.id,
+          targetType: "DOCUMENT",
+          details: "Colaborador tentou acessar documento de outro usuário (IDOR)",
+          ...getForensics(request),
+        },
+      });
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 }); // Regra demonstrável [cite: 95]
     }
 
@@ -65,6 +76,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     // Apenas o dono pode editar, e apenas se for RASCUNHO [cite: 84]
     if (document.ownerId !== user.id || document.status !== "RASCUNHO") {
+      // AppSec: Registra a tentativa de edição não autorizada na trilha forense
+      await prisma.auditLog.create({
+        data: {
+          action: "ACCESS_DENIED",
+          userId: user.id as string,
+          targetId: params.id,
+          targetType: "DOCUMENT",
+          details: "Tentativa de edição de documento sem permissão (não é dono ou não é RASCUNHO)",
+          ...getForensics(request),
+        },
+      });
       return NextResponse.json({ error: "Acesso negado para edição" }, { status: 403 });
     }
 
@@ -124,6 +146,17 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     // Exclusão só é permitida para administradores ou para o dono do rascunho [cite: 170]
     if (user.role !== "ADMINISTRADOR" && (document.ownerId !== user.id || document.status !== "RASCUNHO")) {
+      // AppSec: Registra a tentativa de exclusão não autorizada na trilha forense
+      await prisma.auditLog.create({
+        data: {
+          action: "ACCESS_DENIED",
+          userId: user.id as string,
+          targetId: params.id,
+          targetType: "DOCUMENT",
+          details: "Tentativa de exclusão de documento sem permissão",
+          ...getForensics(request),
+        },
+      });
       return NextResponse.json({ error: "Acesso negado para exclusão" }, { status: 403 });
     }
 
