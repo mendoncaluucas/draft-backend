@@ -182,3 +182,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 >>>>>>> 232e5d6bccad8030acc219cd85b69b669d47f4f2
+
+# Exceção: rota de código /api/logs (App Router), não confundir com logs de runtime
+!src/app/api/logs/
