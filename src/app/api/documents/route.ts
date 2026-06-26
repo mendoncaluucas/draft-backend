@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { PrismaClient } from "@prisma/client";
-import { decode } from "next-auth/jwt";
+import { decode } from "@auth/core/jwt";
 
 const prisma = new PrismaClient();
 
@@ -27,6 +27,8 @@ async function authenticate(request: Request) {
     const decoded = await decode({
       token,
       secret: process.env.AUTH_SECRET!,
+      // salt = nome do cookie de sessão do NextAuth v5 (em produção HTTPS: "__Secure-authjs.session-token")
+      salt: "authjs.session-token",
     });
     return decoded;
   } catch (error) {

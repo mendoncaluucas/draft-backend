@@ -1,7 +1,7 @@
 // src/app/api/logs/route.ts
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { decode } from "next-auth/jwt";
+import { decode } from "@auth/core/jwt";
 
 const prisma = new PrismaClient();
 
@@ -13,6 +13,7 @@ async function authenticate(request: Request) {
     return await decode({
       token: authHeader.split(" ")[1],
       secret: process.env.AUTH_SECRET!,
+      salt: "authjs.session-token",
     });
   } catch (error) {
     return null;
