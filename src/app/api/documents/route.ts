@@ -1,7 +1,7 @@
 // src/app/api/documents/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { decode } from "@auth/core/jwt";
 
 const prisma = new PrismaClient();
@@ -31,7 +31,7 @@ async function authenticate(request: Request) {
       salt: "authjs.session-token",
     });
     return decoded;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -115,7 +115,7 @@ export async function GET(request: Request) {
     const userRole = user.role as string;
 
     // AppSec: Autorização por dono do recurso (Mitigação de IDOR/BOLA) [cite: 93]
-    let whereClause: any = {};
+    let whereClause: Prisma.DocumentWhereInput = {};
     
     if (userRole === "COLABORADOR") {
       // O Colaborador SÓ enxerga os documentos onde ele é o dono [cite: 93, 169]
@@ -136,7 +136,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: documents }, { status: 200 });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

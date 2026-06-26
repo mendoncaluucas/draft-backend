@@ -22,7 +22,7 @@ async function authenticate(request: Request) {
       secret: process.env.AUTH_SECRET!,
       salt: "authjs.session-token",
     });
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -62,7 +62,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 
     return NextResponse.json({ data: document }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
@@ -179,7 +179,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     });
 
     return NextResponse.json({ message: "Documento excluído com sucesso" }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
