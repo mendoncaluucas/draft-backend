@@ -7,11 +7,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // AppSec: Validação de dados no servidor usando Zod para prevenir injeção de dados malformados [cite: 100, 177]
+// AppSec: o registro público NÃO aceita 'role' — qualquer valor enviado é ignorado.
+// Isso impede escalonamento de privilégio (auto-cadastro como ADMINISTRADOR/ANALISTA).
 const registerSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Formato de e-mail inválido"),
   password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres"),
-  role: z.enum(["COLABORADOR", "ANALISTA", "ADMINISTRADOR"]).default("COLABORADOR") // Validação do Enum que contorna a limitação do SQLite
 });
 
 export async function POST(request: Request) {
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
         name: parsedData.name,
         email: parsedData.email,
         passwordHash,
-        role: parsedData.role,
+        // AppSec: registro público SEMPRE cria COLABORADOR. ADMIN/ANALISTA só pela
+        // rota protegida POST /api/admin/users (que exige ADMINISTRADOR autenticado).
+        role: "COLABORADOR",
       },
       select: {
         id: true,
