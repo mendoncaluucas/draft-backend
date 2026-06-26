@@ -33,13 +33,26 @@ DATABASE_URL="file:./dev.db"
 
 # Chave criptográfica para validação da assinatura do JWT
 AUTH_SECRET="sua-chave-super-segura-de-no-minimo-32-caracteres"
-🚀 Passo a Passo de Execução
-Siga as instruções abaixo para executar a API localmente:
-Instalar Dependências: Instale os pacotes e bibliotecas descritos no ecossistema:
-Configurar o Banco de Dados: Sincronize a modelagem relacional forense criando as tabelas necessárias:
-(Alternativamente, utilize npx prisma db push para empurrar o schema diretamente).
-Iniciar o Servidor: Inicie a API garantindo que ela ocupe obrigatoriamente a porta de serviço 3001
-:
+```
+
+## 🚀 Passo a Passo de Execução
+
+Siga as instruções abaixo para executar a API localmente (porta **3001**):
+
+```bash
+# 1. Instalar as dependências
+npm install
+
+# 2. Criar o banco e aplicar as migrations (gera o dev.db)
+npx prisma migrate dev
+# (alternativa: npx prisma db push para empurrar o schema diretamente)
+
+# 3. Iniciar a API na porta 3001
+npm run dev
+```
+
 A API estará operante em http://localhost:3001 aguardando conexões autenticadas.
+
+> O **front-end** fica em repositório separado (`draft-frontend`) e roda na porta **3000** (`npm install && npm run dev`). Ambos compartilham o mesmo valor de `AUTH_SECRET`.
 
 ***
