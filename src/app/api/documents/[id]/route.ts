@@ -40,7 +40,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     const document = await prisma.document.findUnique({
       where: { id: params.id },
-      include: { versions: true, owner: { select: { name: true } } }, // Inclui histórico de versões [cite: 85]
+      include: { versions: true, owner: { select: { id: true, name: true } } }, // Inclui histórico de versões [cite: 85]
     });
 
     if (!document) return NextResponse.json({ error: "Documento não encontrado" }, { status: 404 });
