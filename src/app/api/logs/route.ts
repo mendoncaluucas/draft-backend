@@ -15,7 +15,7 @@ async function authenticate(request: Request) {
       secret: process.env.AUTH_SECRET!,
       salt: "authjs.session-token",
     });
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -31,6 +31,17 @@ export async function GET(request: Request) {
     // 2. AppSec: RBAC de servidor. A trilha de auditoria é exclusiva de administradores.
     // Segunda camada de defesa, independente do middleware do front-end.
     if (user.role !== "ADMINISTRADOR") {
+      // AppSec: registra a tentativa de acesso negado na própria trilha forense
+      await prisma.auditLog.create({
+        data: {
+          action: "ACCESS_DENIED",
+          userId: user.id as string,
+          targetType: "AUDIT_LOG",
+          details: `Perfil '${user.role}' tentou acessar a trilha de auditoria (restrito a ADMINISTRADOR)`,
+          ipAddress: request.headers.get("x-forwarded-for") || "127.0.0.1",
+          userAgent: request.headers.get("user-agent") || "Desconhecido",
+        },
+      });
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
@@ -44,7 +55,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ data: logs }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

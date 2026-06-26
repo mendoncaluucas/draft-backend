@@ -17,6 +17,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsedData = loginSchema.parse(body);
 
+    // AppSec: Coleta forense para a trilha de auditoria (IP de origem e User-Agent)
+    const ipAddress = request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const userAgent = request.headers.get("user-agent") || "Desconhecido";
+
     // 1. Busca o usuário no banco
     const user = await prisma.user.findUnique({
       where: { email: parsedData.email },
@@ -24,6 +28,16 @@ export async function POST(request: Request) {
 
     // AppSec: Retorno genérico para prevenir User Enumeration
     if (!user) {
+      // AppSec: registra a tentativa falha (e-mail inexistente) — detecção de brute-force
+      await prisma.auditLog.create({
+        data: {
+          action: "LOGIN_FAILED",
+          userId: null,
+          details: `Tentativa de login para e-mail inexistente: ${parsedData.email}`,
+          ipAddress,
+          userAgent,
+        },
+      });
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
@@ -31,7 +45,16 @@ export async function POST(request: Request) {
     const passwordMatch = await bcrypt.compare(parsedData.password, user.passwordHash);
 
     if (!passwordMatch) {
-      // Opcional: Aqui seria o local ideal para registrar "LOGIN_FAILED" no AuditLog
+      // AppSec: registra a tentativa falha (senha incorreta) — detecção de brute-force
+      await prisma.auditLog.create({
+        data: {
+          action: "LOGIN_FAILED",
+          userId: user.id,
+          details: "Senha incorreta",
+          ipAddress,
+          userAgent,
+        },
+      });
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
@@ -43,7 +66,15 @@ export async function POST(request: Request) {
       role: user.role,
     };
 
-    // Opcional: Registrar "LOGIN" (sucesso) no AuditLog aqui
+    // AppSec: registra o login bem-sucedido na trilha forense
+    await prisma.auditLog.create({
+      data: {
+        action: "LOGIN",
+        userId: user.id,
+        ipAddress,
+        userAgent,
+      },
+    });
 
     return NextResponse.json({ data: safeUser }, { status: 200 });
 
