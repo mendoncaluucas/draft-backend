@@ -12,14 +12,16 @@ const updateSchema = z.object({
   description: z.string().min(5).optional(),
 });
 
-// Helper de autenticação
+// Helper de autenticação atualizado com o salt
 async function authenticate(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+  
   try {
     return await decode({
       token: authHeader.split(" ")[1],
-      secret: process.env.AUTH_SECRET!,
+      secret: process.env.NEXTAUTH_SECRET!,
+      salt: "authjs.session-token", // <-- Adicionámos o salt aqui também!
     });
   } catch (error) {
     return null;

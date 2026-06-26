@@ -12,31 +12,37 @@ const documentSchema = z.object({
   description: z.string().min(5, "A descrição deve ter no mínimo 5 caracteres"),
 });
 
-// Helper: Extrai e valida o Bearer Token do cabeçalho [cite: 40, 47]
+// Helper de autenticação com logs (espião) e correção do SALT
 async function authenticate(request: Request) {
   const authHeader = request.headers.get("authorization");
   
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log("⚠️ Falha de Autenticação: Cabeçalho ausente ou sem 'Bearer '");
     return null;
   }
-
-  const token = authHeader.split(" ")[1];
   
   try {
-    // Descriptografa e verifica a assinatura do token [cite: 48]
-    const decoded = await decode({
-      token,
-      secret: process.env.AUTH_SECRET!,
+    const stringDoToken = authHeader.split(" ")[1];
+    
+    const tokenDecodificado = await decode({
+      token: stringDoToken,
+      secret: process.env.NEXTAUTH_SECRET!,
+      salt: "authjs.session-token", // <-- Adicionado para corrigir o erro fatal de TypeError
     });
-    return decoded;
+    
+    console.log("✅ Token decodificado com SUCESSO!", tokenDecodificado);
+    return tokenDecodificado;
+    
   } catch (error) {
+    console.error("🚨 ERRO FATAL AO DESCRIPTOGRAFAR O TOKEN:");
+    console.error(error);
     return null;
   }
 }
 
 export async function POST(request: Request) {
   try {
-    // 1. Autenticação [cite: 45]
+    // 1. Autenticação
     const user = await authenticate(request);
     if (!user || !user.id) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -44,29 +50,29 @@ export async function POST(request: Request) {
 
     const userId = user.id as string;
     
-    // Coleta forense para a trilha de auditoria [cite: 152, 155, 177]
+    // Coleta forense para a trilha de auditoria
     const ipAddress = request.headers.get("x-forwarded-for") || "127.0.0.1";
     const userAgent = request.headers.get("user-agent") || "Desconhecido";
 
-    // 2. Validação do Payload da Requisição [cite: 178]
+    // 2. Validação do Payload da Requisição
     const body = await request.json();
     const parsedData = documentSchema.parse(body);
 
-    // 3. Transação no Banco: Garante que as 3 inserções ocorram juntas ou falhem juntas
+    // 3. Transação no Banco
     const result = await prisma.$transaction(async (tx) => {
       
-      // A. Cria o documento base [cite: 84]
+      // A. Cria o documento base
       const newDoc = await tx.document.create({
         data: {
           title: parsedData.title,
           description: parsedData.description,
-          status: "RASCUNHO", // Inicia sempre como rascunho [cite: 87, 122]
+          status: "RASCUNHO", 
           ownerId: userId,
-          currentVersion: 1, // [cite: 123]
+          currentVersion: 1,
         },
       });
 
-      // B. Cria a primeira versão do documento [cite: 86]
+      // B. Cria a primeira versão do documento
       await tx.documentVersion.create({
         data: {
           documentId: newDoc.id,
@@ -76,13 +82,13 @@ export async function POST(request: Request) {
         },
       });
 
-      // C. AppSec: Registra a ação na trilha forense [cite: 96, 98]
+      // C. AppSec: Registra a ação na trilha forense
       await tx.auditLog.create({
         data: {
-          action: "CREATE_DOC", // [cite: 296]
+          action: "CREATE_DOC",
           userId: userId,
           targetId: newDoc.id,
-          targetType: "DOCUMENT", // [cite: 149]
+          targetType: "DOCUMENT",
           ipAddress: ipAddress,
           userAgent: userAgent,
         },
@@ -94,8 +100,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: result }, { status: 201 });
 
   } catch (error) {
+    // CORREÇÃO: O Zod formata o erro de validação exatamente como o Front-end espera receber AQUI no POST!
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues }, { status: 400 });
+      return NextResponse.json({ 
+        error: "Dados inválidos", 
+        details: { fieldErrors: error.flatten().fieldErrors } 
+      }, { status: 400 });
     }
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
@@ -103,26 +113,23 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    // 1. Autenticação [cite: 45]
+    // 1. Autenticação
     const user = await authenticate(request);
     if (!user || !user.id) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 }); // [cite: 51]
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     const userId = user.id as string;
     const userRole = user.role as string;
 
-    // AppSec: Autorização por dono do recurso (Mitigação de IDOR/BOLA) [cite: 93]
+    // AppSec: Autorização por dono do recurso (Mitigação de IDOR/BOLA)
     let whereClause: any = {};
     
     if (userRole === "COLABORADOR") {
-      // O Colaborador SÓ enxerga os documentos onde ele é o dono [cite: 93, 169]
       whereClause = { ownerId: userId };
     } else if (userRole === "ANALISTA") {
-      // O Analista só vê documentos que foram submetidos para revisão [cite: 169, 171]
       whereClause = { status: "EM_REVISAO" }; 
     } 
-    // Se for ADMINISTRADOR, o whereClause continua vazio e ele vê tudo [cite: 169]
 
     const documents = await prisma.document.findMany({
       where: whereClause,
