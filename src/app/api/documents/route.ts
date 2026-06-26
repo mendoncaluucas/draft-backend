@@ -85,6 +85,7 @@ export async function POST(request: Request) {
           userId: userId,
           targetId: newDoc.id,
           targetType: "DOCUMENT", // [cite: 149]
+          details: `Documento criado: "${parsedData.title}"`,
           ipAddress: ipAddress,
           userAgent: userAgent,
         },

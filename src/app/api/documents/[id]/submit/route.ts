@@ -47,6 +47,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
           userId: user.id as string,
           targetId: params.id,
           targetType: "DOCUMENT",
+          details: `Documento submetido para revisão: "${doc.title}"`,
           ...getForensics(request),
         },
       });

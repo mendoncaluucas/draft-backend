@@ -119,10 +119,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
       await tx.auditLog.create({
         data: {
-          action: "UPDATE_DOC", // Registo exigido de edição 
+          action: "UPDATE_DOC", // Registo exigido de edição
           userId: user.id as string,
           targetId: doc.id,
           targetType: "DOCUMENT",
+          details: `Documento editado — nova versão v${newVersionNumber}`,
           ...forensics,
         },
       });
@@ -173,6 +174,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
           userId: user.id as string,
           targetId: params.id,
           targetType: "DOCUMENT",
+          details: `Documento excluído: "${document.title}"`,
           ...forensics,
         },
       });

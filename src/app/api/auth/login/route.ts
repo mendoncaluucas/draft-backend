@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       data: {
         action: "LOGIN",
         userId: user.id,
+        details: `Login bem-sucedido (perfil ${user.role})`,
         ipAddress,
         userAgent,
       },

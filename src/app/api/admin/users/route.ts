@@ -88,6 +88,7 @@ export async function POST(request: Request) {
           userId: user.id as string,
           targetId: novo.id,
           targetType: "USER",
+          details: `Usuário criado: ${novo.email} (${novo.role})`,
           ...getForensics(request),
         },
       });
